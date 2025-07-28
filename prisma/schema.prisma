@@ -1,0 +1,169 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active") // active, completed, paused, cancelled
+  progress    Float    @default(0)
+  startDate   DateTime @default(now())
+  deadline    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  timeEntries    TimeEntry[]
+  notes          Note[]
+  documents      Document[]
+  contacts       Contact[]
+  tasks          Task[]
+  emails         EmailMessage[]
+  calendarEvents CalendarEvent[]
+  
+  @@map("projects")
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  projectId   String
+  activity    String    // Brainstorming, Developing, Meeting, etc.
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?      // in minutes
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("time_entries")
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  company   String?
+  position  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  emails    EmailMessage[]
+  
+  @@map("contacts")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  tags      String?  // JSON array as string
+  projectId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("notes")
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  fileName     String   // Name wie in der DB gespeichert
+  originalName String   // Original-Dateiname vom Upload
+  filePath     String   // Pfad zur Datei
+  size         Int?
+  mimeType     String?
+  projectId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("documents")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  completed   Boolean   @default(false)
+  priority    String    @default("medium") // low, medium, high, urgent
+  dueDate     DateTime?
+  projectId   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("tasks")
+}
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  type        String    @default("event") // meeting, deadline, review, event
+  allDay      Boolean   @default(false)
+  projectId   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("calendar_events")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  
+  @@map("settings")
+}
+
+model EmailMessage {
+  id        String   @id @default(cuid())
+  from      String
+  to        String
+  subject   String
+  body      String
+  sent      Boolean  @default(false)
+  isRead    Boolean  @default(false) // read ist ein reserviertes Wort
+  folder    String?  @default("INBOX")
+  messageId String?  // External message ID
+  sentAt    DateTime @default(now()) // Wann gesendet/empfangen
+  contactId String?
+  projectId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  contact Contact? @relation(fields: [contactId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+  
+  @@map("email_messages")
+}
