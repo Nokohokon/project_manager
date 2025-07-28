@@ -44,7 +44,7 @@ next-env.d.ts
 dist/
 electron/
 launcherAssets/
-lib/
+lib
 prisma/
 projectmanager/
 scripts/
