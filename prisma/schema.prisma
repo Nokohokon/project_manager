@@ -12,7 +12,7 @@ datasource db {
 
 model Project {
   id          String   @id @default(cuid())
-  name        String
+  name        String   @unique
   description String?
   status      String   @default("active") // active, completed, paused, cancelled
   progress    Float    @default(0)
@@ -54,7 +54,7 @@ model Contact {
   id        String   @id @default(cuid())
   firstName String
   lastName  String
-  email     String?
+  email     String? @unique
   phone     String?
   company   String?
   position  String?

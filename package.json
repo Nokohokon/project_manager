@@ -52,6 +52,7 @@
     "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.3.1",
     "ts-node": "^10.9.2",
+    "vercel": "^44.6.4",
     "wait-on": "^8.0.3",
     "zustand": "^5.0.6"
   },
@@ -70,7 +71,6 @@
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"
   },
-  
   "main": "electron/main.js",
   "homepage": "./",
   "build": {

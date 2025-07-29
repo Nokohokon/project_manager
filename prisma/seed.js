@@ -3,7 +3,15 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 
 async function main() {
+
   console.log('Start seeding...')
+
+  // Standard-Einstellungen
+  const settings = [
+    { key: 'theme', value: 'light' },
+    { key: 'language', value: 'de' },
+    { key: 'notifications', value: 'enabled' },
+  ];
 
 
 
