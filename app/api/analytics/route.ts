@@ -4,6 +4,17 @@ import { prisma } from '@/lib/prisma'
 // GET /api/analytics - Analytics Daten abrufen
 export async function GET() {
   try {
+    // Überprüfe ob Prisma verfügbar ist
+    if (!prisma) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      )
+    }
+
+    // Test DB-Verbindung
+    await prisma.$connect()
+
     // Projekt-Statistiken
     const projectStats = await prisma.project.groupBy({
       by: ['status'],
@@ -84,35 +95,35 @@ export async function GET() {
     })
 
     // Tägliche Arbeitszeit diesen Monat
-    const dailyWork = monthlyTimeEntries.reduce((acc: any, entry: any) => {
+    const dailyWork = monthlyTimeEntries.reduce((acc: Record<number, number>, entry) => {
       const day = entry.startTime.getDate()
       acc[day] = (acc[day] || 0) + (entry.duration || 0)
       return acc
     }, {})
 
     return NextResponse.json({
-      projectStats: projectStats.map((stat: any) => ({
+      projectStats: projectStats.map((stat) => ({
         status: stat.status,
         count: stat._count.status
       })),
-      timeByProject: timeByProject.map((time: any) => {
-        const project = projects.find((p: any) => p.id === time.projectId)
+      timeByProject: timeByProject.map((time) => {
+        const project = projects.find((p) => p.id === time.projectId)
         return {
           projectName: project?.name || 'Unbekannt',
           totalTime: time._sum.duration || 0,
           entryCount: time._count.projectId
         }
       }),
-      timeByActivity: timeByActivity.map((activity: any) => ({
+      timeByActivity: timeByActivity.map((activity) => ({
         activity: activity.activity,
         totalTime: activity._sum.duration || 0
       })),
       taskStats: {
-        completed: taskStats.find((t: any) => t.completed)?._count.completed || 0,
-        pending: taskStats.find((t: any) => !t.completed)?._count.completed || 0,
+        completed: taskStats.find((t) => t.completed)?._count.completed || 0,
+        pending: taskStats.find((t) => !t.completed)?._count.completed || 0,
         overdue: overdueTasks
       },
-      tasksByPriority: tasksByPriority.map((priority: any) => ({
+      tasksByPriority: tasksByPriority.map((priority) => ({
         priority: priority.priority,
         count: priority._count.priority
       })),
@@ -125,8 +136,13 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching analytics:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch analytics' },
+      { error: 'Failed to fetch analytics', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
+
+// Für Build-Zeit: Route als dynamisch markieren
+export const dynamic = 'force-dynamic'
